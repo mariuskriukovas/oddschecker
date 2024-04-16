@@ -10,11 +10,29 @@ import (
 	"oddschecker/model"
 	"oddschecker/payloads"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
+func isStringZero(s string) bool {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+	return i == 0
+}
+
 func (s *OddsService) validateOdds(odds string) bool {
 	if s.oddsRegex.MatchString(odds) {
+		if odds == "SP" {
+			return true
+		}
+
+		oddsParts := strings.Split(odds, "/")
+		if isStringZero(oddsParts[0]) || isStringZero(oddsParts[1]) {
+			return false
+		}
+
 		return true
 	}
 
@@ -123,22 +141,6 @@ func (s *OddsService) InsertOdds(payload payloads.OddsPayload) (int, string) {
 	return http.StatusCreated, "Odds have been created for bet !"
 }
 
-func (s *OddsService) printAllOdds() {
-	txn := s.db.Txn(false)
-	defer txn.Abort()
-
-	it, err := txn.Get("odds", "id")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("All Odds Entries:")
-	for obj := it.Next(); obj != nil; obj = it.Next() {
-		odds := obj.(*model.Odds)
-		fmt.Printf("ID: %s, BetID: %d, UserID: %s, Odds: %s\n", odds.ID, odds.BetID, odds.UserID, odds.Odds)
-	}
-}
-
 func (s *OddsService) GetOddsByBetID(betID int64) ([]payloads.OddsPayload, error) {
 	actualBetID, err := s.betService.GetBetID(betID)
 	if err != nil {
@@ -147,8 +149,6 @@ func (s *OddsService) GetOddsByBetID(betID int64) ([]payloads.OddsPayload, error
 	if actualBetID == -1 {
 		return []payloads.OddsPayload{}, errors.New(fmt.Sprintf("Bet not found for given ID %d !", betID))
 	}
-
-	s.printAllOdds()
 
 	odds, err := s.getAllOddsByBetID(actualBetID)
 	if err != nil {

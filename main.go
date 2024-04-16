@@ -27,5 +27,8 @@ func main() {
 		oddsRoutes.GET("/:betId", oddsController.GetOddsByBetID)
 	}
 
-	router.Run(":8080")
+	err = router.Run(":8080")
+	if err != nil {
+		panic(err)
+	}
 }
