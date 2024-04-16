@@ -41,6 +41,7 @@ func (oc *OddsController) GetOddsByBetID(ctx *gin.Context) {
 		return
 	}
 
+	// No bets ordering was required.
 	odds, err := oc.oddsService.GetOddsByBetID(castedBetId)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
